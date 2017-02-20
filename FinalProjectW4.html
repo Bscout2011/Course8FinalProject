@@ -132,12 +132,14 @@ data[data == &quot;&quot;] &lt;- NA                          #Clean-up testing d
 testingData &lt;- read.csv(&quot;pml-testing.csv&quot;)      #Read testing data
 testingData[testingData == &quot;&quot;] &lt;- NA            #Clean-up testing data
 
-#Cross table of variable and number of variable in training data, showing 60 raw variables and 100 summary variables
+#Cross table of variable and number of variable in training data, 
+#showing 60 raw variables and 100 summary variables
 table(apply(data, 2, function(x){sum(!is.na(x))}))          </code></pre>
 <pre><code>## 
 ##   406 19622 
 ##   100    60</code></pre>
-<pre class="r"><code>#Cross table of variable and number of variable in testing data, showing 60 raw variables and 100 summary variables
+<pre class="r"><code>#Cross table of variable and number of variable in testing data, 
+#showing 60 raw variables and 100 summary variables
 table(apply(testingData, 2, function(x){sum(!is.na(x))}))   </code></pre>
 <pre><code>## 
 ##   0  20 
@@ -172,13 +174,13 @@ model2</code></pre>
 ##                      Number of trees: 500
 ## No. of variables tried at each split: 7
 ## 
-##         OOB estimate of  error rate: 0.27%
+##         OOB estimate of  error rate: 0.3%
 ## Confusion matrix:
 ##      A    B    C    D    E  class.error
-## A 5579    1    0    0    0 0.0001792115
-## B    9 3784    4    0    0 0.0034237556
-## C    0   13 3408    1    0 0.0040911748
-## D    0    0   19 3196    1 0.0062189055
+## A 5578    1    0    0    1 0.0003584229
+## B   11 3783    3    0    0 0.0036871214
+## C    0   11 3409    2    0 0.0037989480
+## D    0    0   22 3192    2 0.0074626866
 ## E    0    0    0    5 3602 0.0013861935</code></pre>
 </div>
 <div id="predicting-test-set" class="section level1">
@@ -195,10 +197,8 @@ finalResult</code></pre>
 <h1>Degree of accuracy</h1>
 <pre class="r"><code>k &lt;- 0
 for(i in 1:5){k &lt;- k + model2$confusion[i,i]}
-sum(model2$confusion[,1:5])</code></pre>
-<pre><code>## [1] 19622</code></pre>
-<pre class="r"><code>k/sum(model2$confusion[,1:5])</code></pre>
-<pre><code>## [1] 0.997299</code></pre>
+k/sum(model2$confusion[,1:5])</code></pre>
+<pre><code>## [1] 0.9970441</code></pre>
 </div>
 <div id="finding-important-variable" class="section level1">
 <h1>Finding important variable</h1>
@@ -206,41 +206,41 @@ sum(model2$confusion[,1:5])</code></pre>
 <pre class="r"><code>varImportance &lt;- importance(model2, type = 2)
 varImportance[order(-varImportance),]</code></pre>
 <pre><code>##            roll_belt             yaw_belt        pitch_forearm 
-##           1225.77613            936.77361            771.06245 
-##    magnet_dumbbell_z    magnet_dumbbell_y           pitch_belt 
-##            758.48657            701.02668            700.87105 
-##         roll_forearm    magnet_dumbbell_x        roll_dumbbell 
-##            632.89857            488.29312            413.97688 
-##         accel_belt_z     accel_dumbbell_y        magnet_belt_y 
-##            400.78609            397.44860            392.58896 
-##        magnet_belt_z         gyros_belt_z             roll_arm 
-##            382.53928            325.83405            323.26553 
-##     accel_dumbbell_z      accel_forearm_x     magnet_forearm_z 
-##            322.31812            321.62084            286.16370 
-## total_accel_dumbbell         yaw_dumbbell         magnet_arm_x 
-##            265.19697            258.27770            254.81158 
-##              yaw_arm        magnet_belt_x     accel_dumbbell_x 
-##            248.23206            244.98468            243.64148 
-##      accel_forearm_z     total_accel_belt     gyros_dumbbell_y 
-##            243.60642            239.91471            238.22495 
-##          accel_arm_x         magnet_arm_y     magnet_forearm_y 
-##            232.06891            226.66878            225.67568 
-##     magnet_forearm_x         magnet_arm_z       pitch_dumbbell 
-##            217.43095            189.61289            174.89965 
-##          yaw_forearm            pitch_arm          accel_arm_y 
-##            172.33016            170.07919            152.45161 
+##           1248.59150            936.68046            759.22213 
+##    magnet_dumbbell_z           pitch_belt    magnet_dumbbell_y 
+##            757.61088            709.61237            685.92482 
+##         roll_forearm    magnet_dumbbell_x     accel_dumbbell_y 
+##            617.56442            485.23901            423.95403 
+##        roll_dumbbell        magnet_belt_z         accel_belt_z 
+##            407.53094            404.82463            393.32993 
+##        magnet_belt_y     accel_dumbbell_z             roll_arm 
+##            384.97688            338.05883            334.33440 
+##      accel_forearm_x         gyros_belt_z     magnet_forearm_z 
+##            320.34941            306.51563            296.69862 
+## total_accel_dumbbell         magnet_arm_x         yaw_dumbbell 
+##            286.43326            263.03599            249.19569 
+##        magnet_belt_x     gyros_dumbbell_y      accel_forearm_z 
+##            248.33277            244.71158            242.21179 
+##     accel_dumbbell_x              yaw_arm          accel_arm_x 
+##            238.03526            236.55091            229.10970 
+##         magnet_arm_y     magnet_forearm_x     magnet_forearm_y 
+##            228.32647            226.11959            220.43016 
+##     total_accel_belt            pitch_arm         magnet_arm_z 
+##            210.60301            184.35087            180.00535 
+##          yaw_forearm       pitch_dumbbell          accel_arm_y 
+##            173.28032            171.16371            149.23745 
 ##          gyros_arm_y      accel_forearm_y          gyros_arm_x 
-##            144.32390            143.35366            133.59076 
-##          accel_arm_z     gyros_dumbbell_x      gyros_forearm_y 
-##            130.37122            125.21702            123.74113 
-##         accel_belt_y  total_accel_forearm         gyros_belt_y 
-##            118.01156            110.70412            108.63895 
-##         accel_belt_x      total_accel_arm         gyros_belt_x 
-##            108.31628            104.21880             96.12747 
-##      gyros_forearm_z     gyros_dumbbell_z      gyros_forearm_x 
-##             81.34505             78.32573             71.40194 
+##            138.03253            137.63775            129.90486 
+##          accel_arm_z      gyros_forearm_y     gyros_dumbbell_x 
+##            129.42395            126.65008            124.75014 
+##         accel_belt_y         accel_belt_x         gyros_belt_y 
+##            122.13672            111.16347            110.66078 
+##  total_accel_forearm      total_accel_arm         gyros_belt_x 
+##            105.89365            103.59140             91.96280 
+##     gyros_dumbbell_z      gyros_forearm_z      gyros_forearm_x 
+##             82.24777             80.70008             73.27580 
 ##          gyros_arm_z 
-##             55.36248</code></pre>
+##             51.86272</code></pre>
 </div>
 
 

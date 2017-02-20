@@ -20,9 +20,11 @@ data[data == ""] <- NA                          #Clean-up testing data
 testingData <- read.csv("pml-testing.csv")      #Read testing data
 testingData[testingData == ""] <- NA            #Clean-up testing data
 
-#Cross table of variable and number of variable in training data, showing 60 raw variables and 100 summary variables
+#Cross table of variable and number of variable in training data, 
+#showing 60 raw variables and 100 summary variables
 table(apply(data, 2, function(x){sum(!is.na(x))}))          
-#Cross table of variable and number of variable in testing data, showing 60 raw variables and 100 summary variables
+#Cross table of variable and number of variable in testing data, 
+#showing 60 raw variables and 100 summary variables
 table(apply(testingData, 2, function(x){sum(!is.na(x))}))   
 #Sample of names of raw variables
 apply(data, 2, function(x){sum(!is.na(x))}) %>% .[. == 19622] %>% names %>% head
@@ -64,7 +66,6 @@ finalResult
 ```{r}
 k <- 0
 for(i in 1:5){k <- k + model2$confusion[i,i]}
-sum(model2$confusion[,1:5])
 k/sum(model2$confusion[,1:5])
 ```
 
