@@ -1,0 +1,76 @@
+---
+title: "Final Project for Data Science Course 8 Week 4"
+author: "NguyenDuy"
+date: "19 February 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(openxlsx)
+library(caret)
+library(dplyr)
+setwd("~/Documents/Coursera/DataScientist/Course8/FinalProject")
+```
+
+#Reading data
+There are two types of variable in data: raw variable (about 19500 data point and 20 data point for each variable in training and testing data set, respectively) and summary variable (402 data point and 0 data point for each variable in training and testing data set, respectively). There are 60 raw variable and 100 summary variable in both set. Because in testing data set, only raw variables are provided, thus we only pick out raw variable to construct training model.
+```{r}
+data <- read.csv("pml-training.csv")            #Read training data
+data[data == ""] <- NA                          #Clean-up testing data
+testingData <- read.csv("pml-testing.csv")      #Read testing data
+testingData[testingData == ""] <- NA            #Clean-up testing data
+
+#Cross table of variable and number of variable in training data, showing 60 raw variables and 100 summary variables
+table(apply(data, 2, function(x){sum(!is.na(x))}))          
+#Cross table of variable and number of variable in testing data, showing 60 raw variables and 100 summary variables
+table(apply(testingData, 2, function(x){sum(!is.na(x))}))   
+#Sample of names of raw variables
+apply(data, 2, function(x){sum(!is.na(x))}) %>% .[. == 19622] %>% names %>% head
+#Sample of names of summary variables
+apply(data, 2, function(x){sum(!is.na(x))}) %>% .[. == 406] %>% names %>% head
+```
+
+Extract data into two set: raw variable (set2) and summary variable (set1). We only use set 2 variable in this project.
+```{r}
+set1 <- names(data)[apply(data, 2, function(x){sum(!is.na(x))})==406]
+set2 <- names(data)[apply(data, 2, function(x){sum(!is.na(x))})>406]
+```
+
+#Cleaning data
+From raw data set (set2), we exclude column 1-7, which is only identifier and not real data variable. 
+```{r, warning = FALSE, message = FALSE}
+data[,set2][,c(-1:-7)]  -> extract2
+```
+
+#Model construction 
+We use random forest machine learning method to construct identifier model. 
+```{r, warning = FALSE, message = FALSE}
+library(randomForest)
+model2 <- randomForest(classe~., extract2)
+model2
+```
+
+
+#Predicting test set
+```{r, warning = FALSE, message = FALSE}
+testingDataExtract <- testingData[, names(extract2)[-length(names(extract2))]]
+result <- predict(model2, testingDataExtract)
+tomatch <- c("A", "B", "C", "D", "E")
+finalResult <- sapply(result, function(x){tomatch[x]})
+finalResult
+```
+
+#Degree of accuracy
+```{r}
+k <- 0
+for(i in 1:5){k <- k + model2$confusion[i,i]}
+sum(model2$confusion[,1:5])
+k/sum(model2$confusion[,1:5])
+```
+
+#Finding important variable
+List of variable sorted by the degree of imporant are shown below, which the most imporant as row 1
+```{r}
+varImportance <- importance(model2, type = 2)
+varImportance[order(-varImportance),]
+```
