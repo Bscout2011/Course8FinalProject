@@ -1,0 +1,91 @@
+---
+title: "Final Project for Data Science Course 8 Week 4"
+author: "NguyenDuy"
+date: "19 February 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(openxlsx)
+library(caret)
+library(plyr)
+library(randomForest)
+setwd("~/Documents/Coursera/DataScientist/Course8/FinalProject")
+```
+
+#Reading data
+There are two types of variable in data: raw variable (about 19500 data point and 20 data point in each variable in training data and validating data set, respectively) and summary variable (402 data point and 0 data point for each variable in training and testing data set, respectively). There are 60 raw variable and 100 summary variable in both set. Because in validating data set, only raw variables are provided, thus we only pick out raw variable to construct training model.
+```{r}
+data <- read.csv("pml-training.csv")            #Read training data
+data[data == ""] <- NA                          #Clean-up testing data
+testingData <- read.csv("pml-testing.csv")      #Read testing data
+testingData[testingData == ""] <- NA            #Clean-up testing data
+
+#Cross table of variable and number of variable in training data, 
+#showing 60 raw variables and 100 summary variables
+table(apply(data, 2, function(x){sum(!is.na(x))}))          
+#Cross table of variable and number of variable in testing data, 
+#showing 60 raw variables and 100 summary variables
+table(apply(testingData, 2, function(x){sum(!is.na(x))}))   
+#Sample of names of raw variables
+apply(data, 2, function(x){sum(!is.na(x))}) %>% .[. == 19622] %>% names %>% head
+#Sample of names of summary variables
+apply(data, 2, function(x){sum(!is.na(x))}) %>% .[. == 406] %>% names %>% head
+```
+
+Get raw variable only (set2). We only use set 2 variable in this project.
+```{r}
+#set1 <- names(data)[apply(data, 2, function(x){sum(!is.na(x))})==406]
+set2 <- names(data)[apply(data, 2, function(x){sum(!is.na(x))})>406]
+```
+
+#Cleaning data
+From raw data set (set2), we exclude column 1-7, which is only identifier and not real data variable. 
+```{r, warning = FALSE, message = FALSE}
+data[,set2][,c(-1:-7)]  -> extract2
+```
+
+#Establishing training, testing and validating population
+Training set = 85% data set
+Testing set = 10% data set
+Validating set = 5% data set
+```{r, cache = TRUE}
+set.seed(200)
+partition1 <- createDataPartition(extract2$classe, p = 0.15)[[1]]
+extract2_1 <- extract2[partition1, ]
+trainingData <- extract2[-partition1, ]
+validatingPos <- createDataPartition(extract2_1$classe, p = 1/3)[[1]]
+validatingData <- extract2_1[validatingPos, ]
+testingData <- extract2_1[-validatingPos, ]
+```
+
+#Buiding two model: Random Forest (RF) and Gradient Boosting Machine (GBM)
+As mention by the lecturer, random forest and boosting rank highest in method use in machine learning competition and so I applied these two methods to build our model. Unfortunately, method "rf" in caret perform extremely slow in my computer (even if the number of bootstrapping is reduced to 2), and so I have to use randomForest function in randomForest package. Without applying to caret, the parameter for RF will no be optimizer for this particular dataset. The parameter for RF will be default value of randomForest function. For GBM method, I will use the usual function "train" in caret, which will optimize its parameter. 
+```{r, cache = TRUE, warning = FALSE, message = FALSE}
+set.seed(500)
+methodGBM <- train(as.factor(classe)~., data = trainingData, method = "gbm", trControl= trainControl(number=3), verbose = FALSE)
+methodRF <- randomForest(classe~., data = trainingData, importance = TRUE)
+
+predictGBM <- predict(methodGBM, testingData[,-ncol(testingData)])
+predictRF <- predict(methodRF, testingData[,-ncol(testingData)])
+sum(testingData[,ncol(testingData)] == predictGBM)/length(testingData$classe)
+sum(testingData[,ncol(testingData)] == predictRF)/length(testingData$classe)
+```
+RF perform much better than GBM in testing dataset and therefore it will be selected for validating. 
+
+#Validating using RF
+Accuracy of RF in validating dataset will be its out of sample error
+```{r, warning = FALSE, message = FALSE}
+predictRFValidating <- predict(methodRF, validatingData[,-ncol(validatingData)])
+sum(validatingData[,ncol(validatingData)] == predictRFValidating)/length(validatingData$classe)
+```
+
+#Predicting 20 cases given by Coursera
+```{r, warning = FALSE, message = FALSE}
+courseraQuiz <- read.csv("pml-testing.csv")
+courseraQuizClean <- courseraQuiz[, names(extract2)[-length(names(extract2))]]
+result <- predict(methodRF, courseraQuizClean)
+tomatch <- c("A", "B", "C", "D", "E")
+finalResult <- sapply(result, function(x){tomatch[x]})
+finalResult
+```
